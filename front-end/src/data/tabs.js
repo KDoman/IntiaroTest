@@ -3,6 +3,7 @@ import CONVERTER_ICON from "../assets/converter.svg";
 import HOME_ICON from "../assets/home.svg";
 import ICON_AND_THUMB_ICON from "../assets/icon.svg";
 import GHOST_ICON from "../assets/ghost.svg";
+import PYTHON_ICON from "../assets/python.svg";
 
 export const TABS = [
   { id: "homepage", label: "HomePage", img: HOME_ICON, path: "/" },
@@ -30,6 +31,12 @@ export const TABS = [
     img: GHOST_ICON,
     path: "/Ghost",
   },
+  {
+    id: "python",
+    label: "Python",
+    img: PYTHON_ICON,
+    path: "/Python",
+  },
 ];
 
 export const TABS_WITHOUT_HOMEPAGE = [
@@ -56,5 +63,11 @@ export const TABS_WITHOUT_HOMEPAGE = [
     label: "Ghost (in progress)",
     img: GHOST_ICON,
     path: "/Ghost",
+  },
+  {
+    id: "python",
+    label: "Python",
+    img: PYTHON_ICON,
+    path: "/Python",
   },
 ];
