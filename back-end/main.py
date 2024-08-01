@@ -4,6 +4,7 @@ import re
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 import os
+import glob
 import zipfile
 
 # Download Dir
@@ -48,7 +49,7 @@ def download_images(img_urls, download_dir):
     angle_pattern = re.compile(r'angle/(\d+)')
 
     # Download each image
-    # Downloaded IMG counter
+    # Downloaded IMG counter below
     count_img_downloaded = 0
     # Name of files
     product_name = input("Pass a file name: ")
@@ -89,6 +90,13 @@ def download_images(img_urls, download_dir):
             zipf.write(img_path, os.path.basename(img_path))
 
     print(f"Packed images into {zip_file_name}")
+
+    # Delete all .png files in the download directory after Zipping
+    for png_file in glob.glob(os.path.join(download_dir, '*.png')):
+        try:
+            os.remove(png_file)
+        except Exception as e:
+            print(f"Failed to delete file {png_file}: {e}")
 
 def main():
     with sync_playwright() as playwright:
