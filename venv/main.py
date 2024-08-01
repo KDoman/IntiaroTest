@@ -1,3 +1,5 @@
+from flask import Flask, jsonify, request, send_from_directory
+from flask_cors import CORS
 from playwright.sync_api import sync_playwright
 import requests
 import re
@@ -10,12 +12,14 @@ import zipfile
 # Download Dir
 download_dir = 'downloaded_images'
 
+app = Flask(__name__)
+CORS(app)
+
 def login(page, username, password):
     page.goto("https://portal.intiaro.com/login?configuratorVersion=2.5")
     page.fill('input[name="userName"]', username)
     page.fill('input[name="password"]', password)
     page.click('button[type=submit]')
-
 
 def siloshot_making(page):
     page.wait_for_timeout(5000)
@@ -30,8 +34,6 @@ def generate_urls(img, start_angle=0, end_angle=350, step=10):
     match = angle_pattern.search(img)
     if match:
         base_url = img[:match.start(2)]  # Base URL up to the angle value
-        current_angle = int(match.group(2))  # Current angle value
-        print(base_url)
 
     """Generate a list of URLs with angles from start_angle to end_angle."""
     urls = []
@@ -40,28 +42,17 @@ def generate_urls(img, start_angle=0, end_angle=350, step=10):
         urls.append(new_url)
     return urls
 
-
-def download_images(img_urls, download_dir):
-    # Ensure the download directory exists
+def download_images(img_urls, download_dir, product_name):
     os.makedirs(download_dir, exist_ok=True)
-
-    # Regular expression to find the angle value in the URL
     angle_pattern = re.compile(r'angle/(\d+)')
-
-    # Download each image
-    # Downloaded IMG counter below
     count_img_downloaded = 0
-    # Name of files
-    product_name = input("Pass a file name: ")
-    # List to store img paths data
     image_paths = []
+
     for img_url in img_urls:
         try:
-            # Fetch the image
             img_response = requests.get(img_url)
-            img_response.raise_for_status()  # Check for request errors
+            img_response.raise_for_status()
 
-            # Extract the angle value from the URL
             angle_match = angle_pattern.search(img_url)
             if angle_match:
                 angle_value = angle_match.group(1)
@@ -69,56 +60,55 @@ def download_images(img_urls, download_dir):
             else:
                 img_name = "product_unknown.jpg"
 
-            # Create a full path for saving the image
             img_path = os.path.join(download_dir, img_name)
             image_paths.append(img_path)
 
-            # Write the image content to a file
             with open(img_path, 'wb') as file:
                 file.write(img_response.content)
 
-            print(f'Downloaded: {count_img_downloaded}/36 as {img_name}')
             count_img_downloaded += 1
-
         except Exception as e:
             print(f'Failed to download {img_url}: {e}')
 
-    # Pack images into a zip file
     zip_file_name = os.path.join(download_dir, f"{product_name}_images.zip")
     with zipfile.ZipFile(zip_file_name, 'w') as zipf:
         for img_path in image_paths:
             zipf.write(img_path, os.path.basename(img_path))
 
-    print(f"Packed images into {zip_file_name}")
-
-    # Delete all .png files in the download directory after Zipping
     for png_file in glob.glob(os.path.join(download_dir, '*.png')):
         try:
             os.remove(png_file)
         except Exception as e:
             print(f"Failed to delete file {png_file}: {e}")
 
-def main():
+    return count_img_downloaded, zip_file_name
+
+@app.route('/api/download_images', methods=['POST'])
+def download_images_api():
+    data = request.json
+    product_url = data['product_url']
+    username = data['username']
+    password = data['password']
+    product_name = data['product_name']
+
     with sync_playwright() as playwright:
-        browser = playwright.chromium.launch(headless=False)
+        browser = playwright.chromium.launch(headless=True)
         context = browser.new_context()
         page = context.new_page()
 
-        username = 'lee_industries@intiaro.com'
-        password = r"hj@$NyhH5\>S9p&#Q"
-
-        # Log in to the site
         login(page, username, password)
-
-        # Freeze Site for 30sec
-        product = input("Enter your product link: ")
-        page.goto(product)
+        page.goto(product_url)
         img = siloshot_making(page)
         img_urls = generate_urls(img, start_angle=0, end_angle=360, step=10)
-        download_images(img_urls, download_dir)
+        count_img_downloaded, zip_file_name = download_images(img_urls, download_dir, product_name)
 
         browser.close()
 
+    return jsonify({'count_img_downloaded': count_img_downloaded, 'zip_file_name': zip_file_name})
+
+@app.route('/api/download_zip/<path:filename>', methods=['GET'])
+def download_zip(filename):
+    return send_from_directory(download_dir, filename, as_attachment=True)
 
 if __name__ == "__main__":
-    main()
+    app.run(debug=True)
