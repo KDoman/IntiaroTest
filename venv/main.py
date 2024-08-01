@@ -1,46 +1,16 @@
-from flask import Flask, jsonify, request, send_from_directory
-from flask_cors import CORS
+from flask import Flask, request, send_file, jsonify
 from playwright.sync_api import sync_playwright
 import requests
 import re
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 import os
-import glob
 import zipfile
-
-# Download Dir
-download_dir = 'downloaded_images'
+import glob
 
 app = Flask(__name__)
-CORS(app)
 
-def login(page, username, password):
-    page.goto("https://portal.intiaro.com/login?configuratorVersion=2.5")
-    page.fill('input[name="userName"]', username)
-    page.fill('input[name="password"]', password)
-    page.click('button[type=submit]')
-
-def siloshot_making(page):
-    page.wait_for_timeout(5000)
-    html = page.content()
-    soup = BeautifulSoup(html, 'html.parser')
-    slider = soup.find('img', class_='slider-image')
-    img = slider.get('src')
-    return img
-
-def generate_urls(img, start_angle=0, end_angle=350, step=10):
-    angle_pattern = re.compile(r'(angle/)(\d+)')
-    match = angle_pattern.search(img)
-    if match:
-        base_url = img[:match.start(2)]  # Base URL up to the angle value
-
-    """Generate a list of URLs with angles from start_angle to end_angle."""
-    urls = []
-    for angle in range(start_angle, end_angle + 1, step):
-        new_url = re.sub(r'angle/\d+', f'angle/{angle}', img)
-        urls.append(new_url)
-    return urls
+download_dir = 'downloaded_images'
 
 def download_images(img_urls, download_dir, product_name):
     os.makedirs(download_dir, exist_ok=True)
@@ -52,7 +22,6 @@ def download_images(img_urls, download_dir, product_name):
         try:
             img_response = requests.get(img_url)
             img_response.raise_for_status()
-
             angle_match = angle_pattern.search(img_url)
             if angle_match:
                 angle_value = angle_match.group(1)
@@ -81,34 +50,41 @@ def download_images(img_urls, download_dir, product_name):
         except Exception as e:
             print(f"Failed to delete file {png_file}: {e}")
 
-    return count_img_downloaded, zip_file_name
+    return zip_file_name
 
-@app.route('/api/download_images', methods=['POST'])
-def download_images_api():
+@app.route('/download_images', methods=['POST'])
+def handle_download_images():
     data = request.json
     product_url = data['product_url']
-    username = data['username']
-    password = data['password']
     product_name = data['product_name']
 
     with sync_playwright() as playwright:
-        browser = playwright.chromium.launch(headless=True)
+        browser = playwright.chromium.launch()
         context = browser.new_context()
         page = context.new_page()
-
-        login(page, username, password)
         page.goto(product_url)
-        img = siloshot_making(page)
-        img_urls = generate_urls(img, start_angle=0, end_angle=360, step=10)
-        count_img_downloaded, zip_file_name = download_images(img_urls, download_dir, product_name)
+        page.wait_for_timeout(5000)
+        html = page.content()
+        soup = BeautifulSoup(html, 'html.parser')
+        slider = soup.find('img', class_='slider-image')
+        img = slider.get('src')
 
+        def generate_urls(img, start_angle=0, end_angle=350, step=10):
+            urls = []
+            for angle in range(start_angle, end_angle + 1, step):
+                new_url = re.sub(r'angle/\d+', f'angle/{angle}', img)
+                urls.append(new_url)
+            return urls
+
+        img_urls = generate_urls(img, start_angle=0, end_angle=360, step=10)
+        zip_file_name = download_images(img_urls, download_dir, product_name)
         browser.close()
 
-    return jsonify({'count_img_downloaded': count_img_downloaded, 'zip_file_name': zip_file_name})
+    return jsonify({"zip_file_name": zip_file_name})
 
-@app.route('/api/download_zip/<path:filename>', methods=['GET'])
+@app.route('/download_zip/<filename>', methods=['GET'])
 def download_zip(filename):
-    return send_from_directory(download_dir, filename, as_attachment=True)
+    return send_file(os.path.join(download_dir, filename), as_attachment=True)
 
-if __name__ == "__main__":
-    app.run(debug=True)
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000)
