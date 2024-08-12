@@ -9,7 +9,7 @@ app.use(cors());
 
 app.use(bodyParser.json());
 
-app.post("-back-end/submit-transforms", async (req, res) => {
+app.post("/submit-transforms", async (req, res) => {
   const { transforms, username, password } = req.body;
   try {
     await runPlaywrightScript(transforms, username, password);
