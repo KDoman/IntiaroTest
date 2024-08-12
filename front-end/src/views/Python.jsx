@@ -66,7 +66,7 @@ export const Python = () => {
 
   const handleSubmit = async () => {
     try {
-      const response = await fetch("http://localhost:3001/submit-transforms", {
+      const response = await fetch("/submit-transforms", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
