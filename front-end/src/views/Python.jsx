@@ -1,66 +1,111 @@
-import { H1Component } from "../components/H1Component";
-import PYTHON_ICON from "../assets/python.svg";
-import { Button, Divider, Input } from "@nextui-org/react";
 import { useState } from "react";
-import axios from "axios";
 
-export function Python() {
-  const [login, setLogin] = useState("");
+const parseTxtToTransforms = (fileContents) => {
+  const transforms = {};
+  let currentTransform = null;
+  let currentSection = null;
+  let transformCounter = 0;
+
+  fileContents.forEach((content) => {
+    const lines = content.split("\n");
+
+    lines.forEach((line) => {
+      line = line.trim();
+
+      if (!line) return;
+
+      if (line.includes("Position")) {
+        transformCounter += 1;
+        currentTransform = `Transform ${transformCounter}`;
+        transforms[currentTransform] = {};
+        currentSection = "Position";
+        transforms[currentTransform][currentSection] = [];
+      } else if (line.includes("Rotation")) {
+        currentSection = "Rotation";
+        transforms[currentTransform][currentSection] = [];
+      } else if (line.includes("Scale")) {
+        currentSection = "Scale";
+        transforms[currentTransform][currentSection] = [];
+      } else if (
+        currentSection &&
+        (line.includes("X:") || line.includes("Y:") || line.includes("Z:"))
+      ) {
+        const value = parseFloat(line.split(":")[1].trim());
+        transforms[currentTransform][currentSection].push(value);
+      }
+    });
+  });
+
+  return transforms;
+};
+
+export const Python = () => {
+  const [transforms, setTransforms] = useState(null);
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [url, setUrl] = useState("");
-  const [fileName, setFileName] = useState("");
 
-  const sendData = async () => {
-    await axios
-      .post(API_URL, {
-        login: login,
-        password: password,
-        url: url,
-        fileName: fileName,
-      })
-      .then(function (response) {
-        console.log(response);
-      })
-      .catch(function (error) {
-        console.log(error);
+  const handleFileUpload = (event) => {
+    const files = event.target.files;
+    const fileReaders = [];
+
+    for (let i = 0; i < files.length; i++) {
+      const reader = new FileReader();
+      fileReaders.push(
+        new Promise((resolve) => {
+          reader.onload = (e) => resolve(e.target.result);
+          reader.readAsText(files[i]);
+        })
+      );
+    }
+
+    Promise.all(fileReaders).then((contents) => {
+      const parsedTransforms = parseTxtToTransforms(contents);
+      setTransforms(parsedTransforms);
+    });
+  };
+
+  const handleSubmit = async () => {
+    try {
+      const response = await fetch("http://localhost:3001/submit-transforms", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          transforms,
+          username,
+          password,
+        }),
       });
+
+      if (response.ok) {
+        alert("Transforms submitted successfully.");
+      } else {
+        alert("Error submitting transforms.");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      alert("Error submitting transforms.");
+    }
   };
 
   return (
-    <>
-      <H1Component icon={PYTHON_ICON}>Python</H1Component>
-      <div className="flex justify-evenly w-full mb-10">
-        <Input
-          type="text"
-          label="Login"
-          className="w-1/3"
-          onChange={(e) => setLogin(e.target.value)}
-        />
-        <Input
-          type="password"
-          label="Password"
-          className="w-1/3"
-          onChange={(e) => setPassword(e.target.value)}
-        />
-      </div>
-      <Divider />
-      <div className="flex justify-evenly w-full my-10">
-        <Input
-          type="text"
-          label="Url"
-          className="w-1/3"
-          onChange={(e) => setUrl(e.target.value)}
-        />
-        <Input
-          type="text"
-          label="File name"
-          className="w-1/3"
-          onChange={(e) => setFileName(e.target.value)}
-        />
-      </div>
-      <Button className="block mx-auto mb-10" onClick={sendData}>
-        Run script
-      </Button>
-    </>
+    <div>
+      <h1>Transform Uploader</h1>
+      <input
+        type="text"
+        placeholder="Username"
+        value={username}
+        onChange={(e) => setUsername(e.target.value)}
+      />
+      <input
+        type="password"
+        placeholder="Password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+      />
+      <input type="file" multiple onChange={handleFileUpload} />
+      <button onClick={handleSubmit}>Log in and Submit</button>
+    </div>
   );
-}
+};
