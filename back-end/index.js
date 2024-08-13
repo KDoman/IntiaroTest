@@ -41,7 +41,7 @@ async function runPlaywrightScript(transforms, username, password) {
 const app = express();
 app.use(
   cors({
-    origin: "https://intiaro-front-end.vercel.app/Python",
+    origin: "*",
   })
 );
 app.use(bodyParser.json());
