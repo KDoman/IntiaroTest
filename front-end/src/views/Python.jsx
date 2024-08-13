@@ -66,17 +66,20 @@ export const Python = () => {
 
   const handleSubmit = async () => {
     try {
-      const response = await fetch("/submit-transforms", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          transforms,
-          username,
-          password,
-        }),
-      });
+      const response = await fetch(
+        "https://intiaro-back-end.vercel.app/submit-transforms",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            transforms,
+            username,
+            password,
+          }),
+        }
+      );
 
       if (response.ok) {
         alert("Transforms submitted successfully.");
