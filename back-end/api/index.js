@@ -1,22 +1,31 @@
 const { chromium } = require("playwright");
-const cors = require("cors");
-const express = require("express");
 
-const app = express();
+module.exports = async (req, res) => {
+  // Ustawienie nagłówków CORS
+  res.setHeader("Access-Control-Allow-Origin", "*"); // Można zastąpić '*' konkretną domeną, np. 'https://intiaro-front-end.vercel.app'
+  res.setHeader("Access-Control-Allow-Methods", "POST");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
-app.use(cors());
-app.use(express.json());
-
-app.post("/", async (req, res) => {
-  const { transforms, username, password } = req.body;
-  try {
-    await runPlaywrightScript(transforms, username, password);
-    res.status(200).send("Transforms submitted successfully.");
-  } catch (error) {
-    console.error(error);
-    res.status(500).send("Error submitting transforms.");
+  if (req.method === "OPTIONS") {
+    // Obsługuje preflight request
+    res.status(200).end();
+    return;
   }
-});
+
+  if (req.method === "POST") {
+    const { transforms, username, password } = req.body;
+    try {
+      await runPlaywrightScript(transforms, username, password);
+      res.status(200).send("Transforms submitted successfully.");
+    } catch (error) {
+      console.error(error);
+      res.status(500).send("Error submitting transforms.");
+    }
+  } else {
+    res.setHeader("Allow", ["POST"]);
+    res.status(405).end(`Method ${req.method} Not Allowed`);
+  }
+};
 
 async function runPlaywrightScript(transforms, username, password) {
   const browser = await chromium.launch({ headless: true });
@@ -49,8 +58,3 @@ async function runPlaywrightScript(transforms, username, password) {
 
   await browser.close();
 }
-
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
-});
