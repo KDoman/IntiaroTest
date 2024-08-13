@@ -1,19 +1,36 @@
-const express = require("express");
-const cors = require("cors");
-const bodyParser = require("body-parser");
 const { chromium } = require("playwright");
+const cors = require("cors");
+const express = require("express");
+
+const app = express();
+
+app.use(
+  cors({
+    origin: "*",
+  })
+);
+app.use(express.json());
+
+app.post("/", async (req, res) => {
+  const { transforms, username, password } = req.body;
+  try {
+    await runPlaywrightScript(transforms, username, password);
+    res.status(200).send("Transforms submitted successfully.");
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Error submitting transforms.");
+  }
+});
 
 async function runPlaywrightScript(transforms, username, password) {
-  const browser = await chromium.launch({ headless: false });
+  const browser = await chromium.launch({ headless: true });
   const page = await browser.newPage();
 
-  // Logowanie
   await page.goto("https://intiaro.agitest.pl/admin/products/matrix/add");
   await page.fill("input#id_username", username);
   await page.fill("input#id_password", password);
   await page.click("input[type=submit]");
 
-  // Przesyłanie transformacji
   for (let transform of Object.keys(transforms)) {
     for (let params of Object.keys(transforms[transform])) {
       let formFields = [];
@@ -37,24 +54,7 @@ async function runPlaywrightScript(transforms, username, password) {
   await browser.close();
 }
 
-const app = express();
-
-app.use(cors());
-
-app.use(bodyParser.json());
-
-app.post("/", async (req, res) => {
-  const { transforms, username, password } = req.body;
-  try {
-    await runPlaywrightScript(transforms, username, password);
-    res.status(200).send("Transforms submitted successfully.");
-  } catch (error) {
-    console.error(error);
-    res.status(500).send("Error submitting transforms.");
-  }
-});
-
-const PORT = 3001;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });
