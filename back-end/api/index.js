@@ -29,7 +29,12 @@ app.use(
 // });
 
 app.post("/transforms", (req, res) => {
-  runPlaywrightScript();
+  try {
+    runPlaywrightScript();
+  } catch (err) {
+    res.status = 404;
+    res.send("Coś poszło nie tak");
+  }
 });
 
 app.listen(3000, (req, res) => {
