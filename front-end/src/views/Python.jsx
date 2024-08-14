@@ -66,7 +66,7 @@ export const Python = () => {
 
   const handleSubmit = async () => {
     try {
-      const response = await fetch("https://intiaro-back-end.vercel.app/", {
+      const response = await fetch("http://localhost:3000", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
