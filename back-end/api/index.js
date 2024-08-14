@@ -15,6 +15,19 @@ app.use(
     origin: "*",
   })
 );
+
+app.get("/transforms", async (req, res) => {
+  const browser = await chromium.launch({ headless: true });
+  const page = await browser.newPage();
+  await page.goto("https://intiaro.agitest.pl/admin/products/matrix/add");
+  await browser.close();
+  res.send("Ok");
+});
+
+app.listen(3000, (req, res) => {
+  console.log("runnig");
+});
+
 // app.use(bodyParser.json());
 
 // app.post("/transforms", async (req, res) => {
@@ -28,15 +41,3 @@ app.use(
 //     res.status(500).send("Error submitting transforms.");
 //   }
 // });
-
-app.get("/transforms", async (req, res) => {
-  const browser = await chromium.launch({ headless: false });
-  const page = await browser.newPage();
-  await page.goto("https://intiaro.agitest.pl/admin/products/matrix/add");
-  await browser.close();
-  res.send("Ok");
-});
-
-app.listen(3000, (req, res) => {
-  console.log("runnig");
-});
