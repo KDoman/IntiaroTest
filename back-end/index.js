@@ -48,6 +48,7 @@ app.use(bodyParser.json());
 
 app.post("/", async (req, res) => {
   const { transforms, username, password } = req.body;
+
   try {
     await runPlaywrightScript(transforms, username, password);
     res.status(200).send("Transforms submitted successfully.");
