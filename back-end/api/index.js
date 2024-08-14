@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 // const bodyParser = require("body-parser");
 const { runPlaywrightScript } = require("./playwright-script");
+const { chromium } = require("playwright");
 
 const app = express();
 
@@ -28,13 +29,12 @@ app.use(
 //   }
 // });
 
-app.get("/transforms", (req, res) => {
-  try {
-    runPlaywrightScript();
-  } catch (err) {
-    res.status = 404;
-    res.send("Coś poszło nie tak");
-  }
+app.get("/transforms", async (req, res) => {
+  const browser = await chromium.launch({ headless: false });
+  const page = await browser.newPage();
+  await page.goto("https://intiaro.agitest.pl/admin/products/matrix/add");
+  await browser.close();
+  res.send("Ok");
 });
 
 app.listen(3000, (req, res) => {

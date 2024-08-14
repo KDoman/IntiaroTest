@@ -1,16 +1,10 @@
-const { chromium } = require("playwright");
-
 async function runPlaywrightScript(transforms, username, password) {
-  const browser = await chromium.launch({ headless: false });
-  await browser.newPage();
-  //   const page = await browser.newPage();
-
+  //
   //   // Logowanie
   //   await page.goto("https://intiaro.agitest.pl/admin/products/matrix/add");
   //   await page.fill("input#id_username", username);
   //   await page.fill("input#id_password", password);
   //   await page.click("input[type=submit]");
-
   //   // Przesyłanie transformacji
   //   for (let transform of Object.keys(transforms)) {
   //     for (let params of Object.keys(transforms[transform])) {
@@ -22,7 +16,6 @@ async function runPlaywrightScript(transforms, username, password) {
   //       } else if (params === "Scale") {
   //         formFields = ["scale_x", "scale_y", "scale_z"];
   //       }
-
   //       for (let i = 0; i < formFields.length; i++) {
   //         const field = formFields[i];
   //         const value = transforms[transform][params][i];
@@ -31,7 +24,6 @@ async function runPlaywrightScript(transforms, username, password) {
   //     }
   //     await page.click("input[type=submit][name=_addanother]");
   //   }
-
   //   await browser.close();
 }
 
