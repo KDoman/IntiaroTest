@@ -46,7 +46,7 @@ app.use(
 );
 app.use(bodyParser.json());
 
-app.post("/", async (req, res) => {
+app.post("/transforms", async (req, res) => {
   const { transforms, username, password } = req.body;
 
   try {
@@ -56,8 +56,4 @@ app.post("/", async (req, res) => {
     console.error(error);
     res.status(500).send("Error submitting transforms.");
   }
-});
-
-app.listen(3000, () => {
-  console.log(`Server is running on http://localhost:3000`);
 });
