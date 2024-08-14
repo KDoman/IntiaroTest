@@ -29,5 +29,9 @@ app.use(
 // });
 
 app.post("/transforms", (req, res) => {
-  res.send("transforms function");
+  runPlaywrightScript();
+});
+
+app.listen(3000, (req, res) => {
+  console.log("runnig");
 });
