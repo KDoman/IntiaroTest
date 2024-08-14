@@ -28,7 +28,7 @@ app.use(
 //   }
 // });
 
-app.post("/transforms", (req, res) => {
+app.get("/transforms", (req, res) => {
   try {
     runPlaywrightScript();
   } catch (err) {
