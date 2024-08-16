@@ -11,7 +11,7 @@ import { JpgToPng } from "./views/JpgToPng.jsx";
 import { Ghost } from "./views/Ghost.jsx";
 import { StaticView } from "./components/StaticView.jsx";
 import { HomePage } from "./views/HomePage.jsx";
-import { Python } from "./views/Python.jsx";
+import { TransformImporter } from "./views/TransformImporter.jsx";
 
 const router = createBrowserRouter([
   {
@@ -23,7 +23,7 @@ const router = createBrowserRouter([
       { path: "Icon_&_thumbnail", element: <IconAndThumbnail /> },
       { path: "Jpg_to_png", element: <JpgToPng /> },
       { path: "Ghost", element: <Ghost /> },
-      { path: "Python", element: <Python /> },
+      { path: "Transform_importer", element: <TransformImporter /> },
     ],
   },
 ]);
