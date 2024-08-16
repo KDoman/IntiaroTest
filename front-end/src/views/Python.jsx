@@ -61,13 +61,14 @@ export const Python = () => {
     Promise.all(fileReaders).then((contents) => {
       const parsedTransforms = parseTxtToTransforms(contents);
       setTransforms(parsedTransforms);
+      console.log(transforms);
     });
   };
 
   const handleSubmit = async () => {
     try {
       const response = await fetch(
-        "https://intiaro-back-end.vercel.app/transforms",
+        "https://karolkrusz-transforms-importer.hf.space/run-playwright/",
         {
           method: "POST",
           headers: {
